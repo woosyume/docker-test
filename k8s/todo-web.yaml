@@ -1,73 +1,72 @@
-kind: Service
 apiVersion: v1
+kind: Service # Serviceリソース
 metadata:
-  name:  todoweb
+  name: todoweb # Serviceリソースの名前はtodoweb
   labels:
-    app: todoweb
-spec:
+    app: todoweb # Serviceリソースのラベルはapp: todoweb
+spec: # Serviceリソースの仕様
   selector:
-    app:  todoweb
+    app: todoweb # app: todowebラベルを持つPodが対象
   ports:
-  - name:  http
-    port:  80
-  type: NodePort # For publishing with Ingress
----
+    - name: http
+      port: 80 # app: todowebラベルのhttpポート80を持つPodが対象。またService自身のポートは80
+  type: NodePort # 指定されたレンジのポートを割り当て、Nodeはそのポートへの通信をServiceに割り当てる。
 
+---
 apiVersion: apps/v1
-kind: Deployment
+kind: Deployment # Deploymentリソース
 metadata:
-  name: todoweb
+  name: todoweb # Deploymentリソースの名前はtodoweb
   labels:
-    name: todoweb
+    name: todoweb # Deploymentリソースのラベルはname: todoweb
 spec:
-  replicas: 2
+  replicas: 2 # Podのレプリカは2
   selector:
     matchLabels:
-      app: todoweb
-  template:
+      app: todoweb # 対象はapp: todowebラベルを持つPod
+  template: # Pod Template
     metadata:
       labels:
-        app: todoweb
+        app: todoweb # Podのラベルはapp: todoweb
     spec:
-      volumes:
-      - name: assets
-        emptyDir: {}
-      containers:
-      - name: nginx
-        image: gihyodocker/nginx-nuxt:latest
-        imagePullPolicy: Always
+      volumes: # ← ①
+      - name: assets # assetsという名称のVolumeを作成
+        emptyDir: {} # Pod単位に割り当てられる仮想Volumeを作成。Podが削除されると削除される。
+      containers: # コンテナ定義
+      - name: nginx # コンテナ名
+        image: gihyodocker/nginx-nuxt:latest # コンテナイメージ
+        imagePullPolicy: Always # ローカルにキャッシュイメージがあればそれを使用。なければイメージをダウンロードしてくる
         ports:
-        - containerPort: 80
+        - containerPort: 80 # コンテナのポート。同一Pod内で衝突しないように。
         env:
-          - name: WORKER_PROCESSES
-            value: "2"
-          - name: WORKER_CONNECTIONS
-            value: "1024"
-          - name: LOG_STDOUT
-            value: "true"
-          - name: BACKEND_HOST
-            value: "localhost:3000"
-        volumeMounts:
-          - mountPath: /var/www/_nuxt
-            name: assets
+        - name: WORKER_PROCESSES
+          value: "2"
+        - name: WORKER_CONNECTIONS
+          value: "1024"
+        - name: LOG_STDOUT
+          value: "true"
+        - name: BACKEND_HOST
+          value: "localhost:3000" # 同じPod内のwebコンテナを指している
+        volumeMounts: # ← ②
+        - mountPath: /var/www/_nuxt # マウントするコンテナのパスを指定
+          name: assets # 仮想Volumeのassetsでマウント
 
       - name: web
         image: gihyodocker/todoweb:latest
         imagePullPolicy: Always
-        lifecycle:
-            postStart:
-              exec:
-                command:
-                  - cp
-                  - -R
-                  - /todoweb/.nuxt/dist
-                  - /
+        lifecycle: # ← ③
+          postStart:
+            exec:
+              command:
+              - cp
+              - -R
+              - /todoweb/.nuxt/dist
+              - /
         ports:
-          - containerPort: 3000
+        - containerPort: 3000
         env:
-          - name: TODO_API_URL
-            value: http://todoapi
-        volumeMounts:
-          - mountPath: /dist
-            name: assets
-   
+        - name: TODO_API_URL
+          value: http://todoapi # Service名をURLにしたもの
+        volumeMounts: # ← ④
+        - mountPath: /dist
+          name: assets

@@ -47,12 +47,11 @@ spec:
         image: gihyodocker/todoapi:latest
         imagePullPolicy: Always
         ports:
-          - containerPort: 8080
+        - containerPort: 8080
         env:
-          - name: TODO_BIND
-            value: ":8080"
-          - name: TODO_MASTER_URL
-            value: "gihyo:gihyo@tcp(mysqk-master:3306)/tododb?parseTime=true"
-          - name: TODO_SLAVE_URL
-            value: "gihyo:gihyo@tcp(mysqk-slave:3306)/tododb?parseTime=true"
-
+        - name: TODO_BIND
+          value: ":8080"
+        - name: TODO_MASTER_URL
+          value: "gihyo:gihyo@tcp(mysqk-master:3306)/tododb?parseTime=true"
+        - name: TODO_SLAVE_URL
+          value: "gihyo:gihyo@tcp(mysqk-slave:3306)/tododb?parseTime=true"
